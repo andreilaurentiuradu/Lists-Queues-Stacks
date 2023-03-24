@@ -1,75 +1,82 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
+// celulele pentru banda
 typedef struct Nod {
     char value;
     struct Nod *left, *right;
 } nod;
 
-typedef struct banda {
+// celulele pentru coada/stiva
+typedef struct Cell {
+    char *value;
+    struct Cell *next;
+} cell;
+
+// banda
+typedef struct Banda {
     nod *head, *finger;
 } banda;
 
-typedef struct Coada {
-    struct Coada *next;
-    char *value;
-} coada;
+// coada
+typedef struct Queue {
+    cell *head, *tail;
+    int length;
+} queue;
 
-/// MERGE
-// initializare coada(lista simplu inlantuita cu santinela)
-void initQ(coada **q) {
-    (*q) = (coada *)malloc(sizeof(coada));
-    (*q)->next = NULL;
-    (*q)->value = "\0";
+// alocare celula pentru coada
+cell *initCell(char *value) {
+    cell *p = (cell *)malloc(sizeof(cell));
+    //printf("value: %s\n", value);
+
+    // alocam memorie pentru sirul de caractere reprezentat de comanda
+    p->value = (char *)malloc(sizeof(char) * (strlen(value) + 1));
+    strcpy(p->value, value);
+    //printf("s-a pus in p->value:%s\n", p->value);
+    p->next = NULL;
+    return p;
+}
+// initializam coada
+queue *initQ() {
+    queue *q = (queue *)malloc(sizeof(queue));
+    q->head = q->tail = NULL;
+    q->length = 0;
+    return q;
 }
 
-/// MERGEE
-// verificare coada nula
-int emptyQ(coada *q) {
-    if (q->next != NULL) return 0;
-    return 1;
+// verificam daca coada este goala
+int emptyQ(queue *q) {
+    if (q->head == NULL) return 1;
+    return 0;
     // 1 = empty
 }
 
-/// MERGEE
-// adaugare in coada
-void addQ(coada *q, char *x) {
-    coada *aux = (coada *)malloc(sizeof(coada));
-    aux->value = x;
-    aux->next = NULL;
-    while (q->next) {
-        q = q->next;
-    }
-    q->next = aux;  // urmatorul element dupa santinela
-}
-
 // stergere din coada
-void popQ(coada *q) {
-    coada *u = q->next;
-
-    // mergem cu 2 noduri prin lista
-    while (u->next != NULL) {
-        q = u;        // copie pentru nodul u
-        u = u->next;  // trecem la urmatorul nod
-    }
-    // am ajuns la ultimul nod (retinut in u)
-    // q retine penultimul nod
-    q->next = NULL;
+void popQ(queue *q) {
+    cell *u = q->head;
+    q->head = u->next;
     free(u);
 }
 
-/// MERGEEE
-// afisare coada
-void showQ(coada *q) {
-    printf("coada este: ");
-    while (q) {
-        printf("%s\n", q->value);
-        q = q->next;
+// adaugare in coada(head, element, element, element, tail)
+void addQ(queue *q, char *value) {
+    cell *nou = initCell(value);
+    //printf("nou->value:%s\n", nou->value);
+    if (!q->length) {
+        q->head = nou;
+        q->tail = nou;
+        //printf("s-a creat primul nod\n");
+        // strcpy(q->head->value, op);
+        // strcpy(q->tail->value, op);
+    } else {
+        // strcpy(nou->value, op);
+        q->tail->next = nou;
+        q->tail = nou;
+        // q->tail = NULL;
     }
-    printf("\n");
+    (q->length)++;
 }
 
-/// MERGE
 // creare santinela + prima pozitie
 void init(banda *p) {
     // alocam memorie pentru santinela, prima pozitie si deget
@@ -88,11 +95,12 @@ void init(banda *p) {
     first->left = p->head;
 }
 
-/// MERGEE
+// OPERATII DE TIP QUERY
 // afisam banda cu tot cu deget
 void show(banda *p) {
     // luam un nod auxiliar care sa primeasca headul listei
     nod *aux = p->head;
+    printf("banda: ");
     while (aux != NULL) {
         if (aux == p->finger)
             printf("|%c|", aux->value);
@@ -103,20 +111,23 @@ void show(banda *p) {
     printf("\n");
 }
 
-// OPERATII DE TIP UPDATE(toate operatiile merg, STERGE CONTORUL)
+void show_current(banda *p) { printf("%c", p->finger->value); }
 
+// OPERATII DE TIP UPDATE(toate operatiile merg, STERGE CONTORUL)
 // move_left move_right
 char contor = '0';
 void move(banda *a, char direction) {
     if (direction == 'l') {
-        if (a->finger != a->head->right)  // daca nu suntem pe prima pozitie (head e santinela)
+        if (a->finger !=
+            a->head
+                ->right)  // daca nu suntem pe prima pozitie (head e santinela)
             a->finger = a->finger->left;
     }
 
     if (direction == 'r') {
         if (a->finger->right == NULL) {
             nod *aux = (nod *)malloc(sizeof(nod));
-            aux->value = contor; //DE MODIFICAT
+            aux->value = '#';  // DE MODIFICAT
             aux->right = NULL;
             a->finger->right = aux;  //<=>a->head->right->right = aux;
             aux->left = a->finger;
@@ -128,18 +139,18 @@ void move(banda *a, char direction) {
 // move_left_char move_right_char
 void move_char(banda *a, char direction, char c) {
     nod *p = a->finger;
-    if(direction == 'l') {
-        while(p->left != NULL && p->value != c){
+    if (direction == 'l') {
+        while (p->left != NULL && p->value != c) {
             p = p->left;
         }
-        if(p ->value != c)
+        if (p->value != c)
             printf("ERROR");
         else
             a->finger = p;
     }
 
-    if(direction == 'r') {
-        while(p->right != NULL && p->value != c){
+    if (direction == 'r') {
+        while (p->right != NULL && p->value != c) {
             p = p->right;
         }
 
@@ -155,55 +166,77 @@ void move_char(banda *a, char direction, char c) {
 }
 
 // write <c>
-void write(banda *a, char c) { 
-    a->finger->value = c; 
-}
+void write(banda *a, char c) { a->finger->value = c; }
 
 int main() {
+    // banda
     banda a;
+    // coada de operatii
+    queue *op;
+    // numarul de operatii
+    int t;
+    // numele operatiilor
+    char operation[20];
+
+    // initializam coada de operatii si banda
+    op = initQ();
     init(&a);
     show(&a);
-    move(&a, 'r');
-    contor++;
-    show(&a);
-    move(&a, 'r');
-    contor++;
-    show(&a);
-    move(&a, 'r');
-    contor++;
-    show(&a);
-    write(&a, 'A');
-    show(&a);
-    move_char(&a, 'l', '0');
-    write(&a, '5');
-    show(&a);
-    move_char(&a, 'r', 'B');
-    show(&a);
+    // citim numarul de operatii
+    scanf("%d", &t);
+    // scapi de enter
+    getchar();
 
+    for (int i = 1; i <= t; ++i) {
+        fgets(operation, 20, stdin);
+        // scapam de enter
+        operation[strlen(operation) - 1] = '\0';
 
-    coada *q;
-    initQ(&q);
-    showQ(q);
-    // printf("%d\n", emptyQ(q));
-    // addQ(q, "DA");
-    // writeQ(q);
-    // printf("%d\n", emptyQ(q));
-    // addQ(q, "MErge");
-    // writeQ(q);
-    // printf("%d\n", emptyQ(q));
-    // addQ(q, "esti");
-    // popQ(q);
-    // writeQ(q);
-    // printf("%d\n", emptyQ(q));
-    // addQ(q, "ZEUUUUU");
-    // writeQ(q);
-    // printf("%d\n", emptyQ(q));
-    // popQ(q);
-    // writeQ(q);
+        //printf("operatie:%s\n", operation);
+        if (strcmp(operation, "EXECUTE") == 0) {
+            // scoatem din coada si facem operatia
+            char *o = (char *)malloc(sizeof(char) * (strlen(op->head->value) + 1));
+            o = op->head->value;
+            popQ(op);
+            if(strstr(o, "WRITE"))
+                write(&a, o[strlen(o)-1]);
 
-    // while(!emptyQ(q))
-    //     popQ(q);
-    // free(q); // sa scap de coada
-    // dupa scapi de banda
+            if(strcmp(o, "MOVE_RIGHT") == 0)
+                move(&a, 'r');
+            if(strcmp(o, "MOVE_LEFT") == 0)
+                move(&a, 'l');
+            //if(strcmp(o, "MOVE"))
+        } else {
+            if (strcmp(operation, "UNDO") == 0) {
+            } else {
+                if (strcmp(operation, "REDO") == 0) {
+                } else {
+                    if (strcmp(operation, "SHOW") == 0) {
+                        show(&a);
+                    } else {
+                        if (strcmp(operation, "SHOW_CURRENT") == 0) {
+                            show_current(&a);
+                        }
+                        // daca nu e execute sau undo/redo sau query atunci e
+                        // bagat in coada
+                        else
+                            addQ(op, operation);  // adaugam in coada
+                    }
+                }
+            }
+        }
+
+        printf("dupa operatie: ");
+        show(&a);
+    }
+
     return 0;
 }
+
+
+
+
+// while(!emptyQ(q))
+//     popQ(q);
+// free(q); // sa scap de coada
+// dupa scapi de banda
