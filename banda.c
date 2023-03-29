@@ -2,349 +2,219 @@
 #include <stdlib.h>
 #include <string.h>
 // celulele pentru banda
-typedef struct Nod {
+typedef struct Nod
+{
     char value;
     struct Nod *left, *right;
 } nod;
 
 // celulele pentru coada/stiva
-typedef struct Cell {
+typedef struct Cell
+{
     char *value;
     struct Cell *next;
 } cell;
 
 // banda
-typedef struct Banda {
+typedef struct Banda
+{
     nod *head, *finger;
 } banda;
 
 // coada
-typedef struct Queue {
+typedef struct Queue
+{
     cell *head, *tail;
     int length;
 } queue;
 
-typedef struct Stack {
+typedef struct Stack
+{
     cell *head;
     int length;
-}stack;
+} stack;
 
-
-// alocare celula pentru coada
-cell *initCell(char *value) {
-    cell *p = (cell *)malloc(sizeof(cell));  // prima alocare e pentru cells
-
+// alocam memorie pentru cell(element al cozii/stivei)
+cell *initCell(char *value)
+{
+    cell *p = (cell *)malloc(sizeof(cell)); // prima alocare e pentru cells
+    printf("%ld\n", strlen(value));
     // alocam memorie pentru sirul de caractere reprezentat de comanda
-    p->value = (char *)malloc(
-        sizeof(char) *
-        (strlen(value) + 1));  // a doua alocare e pentru char *value
+    p->value = (char *)malloc(sizeof(char) * (strlen(value) + 1)); // a doua alocare e pentru char *value
+
+    // copiem sirul in celula
     strcpy(p->value, value);
+    printf("s-a adaugat operatia %s\n", p->value);
     p->next = NULL;
     return p;
 }
 
-// void push(stack *st, char* value) {
-//     cell *p = initCell(value);
-//     if(st->head == NULL){
-//         st->head = p;
-//         st->length = 1;
-//         return;
-//     }
-//     p->next = st->head;
-//     st->head = p;
-//     st->length ++;
-//     return;
-// }
-
-// void pop(stack *st) {
-//     cell *aux = st->head;
-//     st->head = st->head->next;
-//     free(aux);
-//     st->length--;
-// }
-
-// char * top(stack *st) {
-//     return st->head->value;
-// }
-
-
-
-
-
-
-
-
-
 // initializam coada
-queue *initQ() {
+queue *initQ()
+{
     queue *q = (queue *)malloc(
-        sizeof(queue));  //  a treia alocare e pentru coada in sine
+        sizeof(queue)); //  a treia alocare e pentru coada in sine
     q->head = q->tail = NULL;
     q->length = 0;
     return q;
 }
 
 // verificam daca coada este goala
-int emptyQ(queue *q) {
-    if (q->head == NULL) return 1;
+int emptyQ(queue *q)
+{
+    if (q->head == NULL)
+        return 1;
     return 0;
     // 1 = empty
 }
 
 // stergere din coada
-void popQ(queue *q) {
+void popQ(queue *q)
+{
     cell *u = q->head;
     q->head = u->next;
+    // stergem char* alocat pentru campul value
+    free(u->value);
     free(u);
     --q->length;
 }
 
 // adaugare in coada(head, element, element, element, tail)
-void addQ(queue *q, char *value) {
-    cell *nou = initCell(value);  // apelul pentru prima si a doua
-    if (!q->length) {
+void addQ(queue *q, char *value)
+{
+    printf("in coada ");
+    cell *nou = initCell(value);
+
+    if (!q->length)
+    {
         q->head = nou;
         q->tail = nou;
-    } else {
+    }
+    else
+    {
         q->tail->next = nou;
         q->tail = nou;
     }
     (q->length)++;
 }
 
-// creare santinela + prima pozitie
-void init(banda *p) {
-    // alocam memorie pentru santinela, prima pozitie
-    p->head = (nod *)malloc(sizeof(nod));     // a 4-a alocare pentru head
-    nod *first = (nod *)malloc(sizeof(nod));  // a 5-a alocare pentru first
-    p->finger = first;
-    // punem valueueoarea santinelei pe NULL si # pe prima pozitie
-    p->head->value = '\0';
-    first->value = '#';
-
-    // facem cele 4 legaturi
-    p->head->right = first;
-    p->head->left = NULL;
-    first->right = NULL;
-    first->left = p->head;
+// eliberam memoria ocupata de coada
+void delete_queue(queue *q)
+{
+    while (!emptyQ(q))
+    {
+        popQ(q);
+    }
+    // eliberam memoria pentru structura in sine
+    free(q);
 }
 
-// OPERATII DE TIP QUERY
-// afisam banda cu tot cu deget
-void show(banda *p) {
-    // luam un nod auxiliar care sa primeasca headul listei
-    nod *aux = p->head;
-    printf("banda: ");
-    while (aux != NULL) {
-        if (aux == p->finger)
-            printf("|%c|", aux->value);
-        else
-            printf("%c", aux->value);
-        aux = aux->right;
-    }
-    printf("\n");
+
+
+
+
+// initializam stiva
+stack *initStack() {
+    stack *st = (stack *)malloc(
+        sizeof(stack)); 
+    st->head  = NULL;
+    st->length = 0;
+    return st;
 }
 
-void show_current(banda *p) { printf("%c", p->finger->value); }
-
-// OPERATII DE TIP UPDATE
-// move_left move_right
-void move(banda *a, char direction) {
-    if (direction == 'l') {
-        if (a->finger !=
-            a->head
-                ->right)  // daca nu suntem pe prima pozitie (head e santinela)
-            a->finger = a->finger->left;
+// adaugam in stiva
+void pushS(stack *st, char* value) {
+    printf("in stiva ");
+    cell *p = initCell(value);
+    if(st->head == NULL){
+        st->head = p;
+        st->length = 1;
+        return;
     }
-
-    if (direction == 'r') {
-        if (a->finger->right == NULL) {
-            nod *aux = (nod *)malloc(
-                sizeof(nod));  //  a 6-a alocare pentru nod nou in move
-            aux->value = '#';  // DE MODIFICAT
-            aux->right = NULL;
-            a->finger->right = aux;  //<=>a->head->right->right = aux;
-            aux->left = a->finger;
-            a->finger = a->finger->right;  // mutam degetu pe pozitia aia
-        }
-    }
+    p->next = st->head;
+    st->head = p;
+    st->length ++;
+    return;
 }
 
-// move_left_char move_right_char
-void move_char(banda *a, char direction, char c) {
-    nod *p = a->finger;
-    if (direction == 'l') {
-        while (p->left != NULL && p->value != c) {
-            p = p->left;
-        }
-        if (p->value != c)
-            printf("ERROR");
-        else
-            a->finger = p;
-    }
-
-    if (direction == 'r') {
-        while (p->right != NULL && p->value != c) {
-            p = p->right;
-        }
-
-        if (p->value != c) {
-            nod *aux = (nod *)malloc(
-                sizeof(nod));  // a 7-a alocare pentru nod nou in move_char
-            aux->value = '#';
-            aux->right = NULL;
-            p->right = aux;  //<=>a->head->right->right = aux;
-            aux->left = p;
-            p = p->right;  // mutam degetu pe pozitia aia
-        }
-    }
+// stergem din stiva
+void popS(stack *st) {
+    cell *aux = st->head;
+    st->head = st->head->next;
+    free(aux->value);
+    free(aux);
+    st->length--;
 }
 
-// write <c>
-void write(banda *a, char c) { a->finger->value = c; }
+// extragem varful stivei
+char * topS(stack *st) {
+    return st->head->value;
+}
 
-// NETESTATA
-// void insert_char(banda *a, char direction, char c) {
-//     nod *p = a->finger;
+int emptyS(stack *st) {
+    if(st -> head == NULL)
+        return 1;
+    return 0;
+    // 1 = empty
+}
+void delete_stack(stack *st) {
+    while(!emptyS(st)) {
+        popS(st);
+    }
+    free(st);
+}
 
-//     if(direction == 'l') {
-//         // nu uita ca head e santinela
-//         if(p == a->head->right) {
-//             printf("ERROR\n");
-//         } else {
-//             nod *u = a->finger->left;
-//             nod *nou = (nod *)malloc(sizeof(nod));
-//             nou->left = u;
-//             nou->right = p;
-//             nou->value = c;
 
-//             u->right = nou;
-//             p->left = nou;
+// // creare santinela + prima pozitie
+// void init(banda *p) {
+//     // alocam memorie pentru santinela, prima pozitie
+//     p->head = (nod *)malloc(sizeof(nod));     // a 4-a alocare pentru head
+//     nod *first = (nod *)malloc(sizeof(nod));  // a 5-a alocare pentru first
+//     p->finger = first;
+//     // punem valueueoarea santinelei pe NULL si # pe prima pozitie
+//     p->head->value = '?';//las asta aici
+//     first->value = '#';
 
-//             a->finger = nou;
-//         }
-//     }
-
-//     if(direction == 'r') {
-//         if(a->finger->right){
-//             nod *u = a->finger->right;
-//             nod *nou = (nod *)malloc(sizeof(nod));
-//             p->right = nou;
-//             u->left = nou;
-//             nou->value = c;
-//             nou->left = p;
-//             nou->right = u;
-//             a->finger = nou;
-//         } else {
-//             nod *nou = (nod *)malloc(sizeof(nod));
-//             p->right = nou;
-//             nou->value = c;
-//             nou->left = p;
-//             a->finger = nou;
-//         }
-//     }
+//     // facem cele 4 legaturi
+//     p->head->right = first;
+//     p->head->left = NULL;
+//     first->right = NULL;
+//     first->left = p->head;
 // }
 
-
-
-
-int empty_banda(banda *a) {
-    if (a->head == NULL) return 0;
-    return 1;
-}
-// stergem din banda
-void pop_banda(banda *a) {
-    nod *u = a->head;
-    a->head = u->right;  // mutam capul
-    free(u);
-}
-
-// eliberam memoria structurilor
-void delete_struct(queue *q, banda *a) {
-    while (!emptyQ(q))
-        popQ(q);  // in caz ca nu vi fi goala desi cred ca va fi mereu
-    // sa scap de coada
-    // printf("coada e coada?:%d\n", emptyQ(q));
-    free(q);
-    // dupa scapi de banda
-    while (a->head != NULL) {
-        pop_banda(a);  // eliberam simultan memoria pentru banda
-        // show(a);
-    }
-}
-
-int main() {
-    // banda
-    banda a;
+int main()
+{
+    FILE *in = fopen("t1.in", "r");
+    FILE *out = fopen("t1.out", "w");
+    //  banda
+    // banda a;
+    stack *st;
+    st = initStack();
     // coada de operatii
-    queue *op;
+    queue *q;
+    q = initQ();
     // numarul de operatii
     int t;
     // numele operatiilor
-    char operation[20];
-    char *o;
+    char operation[100];
+    // char *o;
 
-    // initializam coada de operatii si banda
-    op = initQ();
-    init(&a);
-    show(&a);
-    // citim numarul de operatii
-    scanf("%d", &t);
-    // scapi de enter
-    getchar();
-
-    for (int i = 1; i <= t; ++i) {
-        fgets(operation, 20, stdin);
-        // scapam de enter
-        operation[strlen(operation) - 1] = '\0';
-
-        // printf("operatie:%s\n", operation);
-        if (strcmp(operation, "EXECUTE") == 0) {
-            // scoatem din coada si facem operatia
-            if (!emptyQ(op)) {
-                o = op->head->value;
-                popQ(op);
-                if (strstr(o, "WRITE")) write(&a, o[strlen(o) - 1]);
-
-                if (strcmp(o, "MOVE_RIGHT") == 0) move(&a, 'r');
-                if (strcmp(o, "MOVE_LEFT") == 0) move(&a, 'l');
-                // if(strcmp(o, "MOVE"))
-            }
-        } else {
-            if (strcmp(operation, "UNDO") == 0) {
-                printf("face undo\n");
-            } else {
-                if (strcmp(operation, "REDO") == 0) {
-                    printf("face redo\n");
-                } else {
-                    if (strcmp(operation, "SHOW") == 0) {
-                        show(&a);
-                    } else {
-                        if (strcmp(operation, "SHOW_CURRENT") == 0) {
-                            show_current(&a);
-                        }
-                        // daca nu e execute sau undo/redo sau query
-                        // atunci e
-                        // bagat in coada
-                        else {
-                            addQ(op, operation);  // adaugat   in coada
-                        }
-                    }
-                }
-            }
-        }
-
-        printf("dupa operatie: ");
-        show(&a);
+    fscanf(in, "%d", &t);
+    fgets(operation, 100, in); // sa scapam de enterul de dupa t
+    
+    for (int i = 1; i <= t; ++i)
+    {
+        fgets(operation, 100, in);
+        // stergem enterul retinut de fgets
+        operation[strlen(operation)-1] = '\0';
+        addQ(q, operation);
+        pushS(st, operation);
     }
-
-    delete_struct(op, &a);
+    printf("topul stivei este %s\n", topS(st));
+    printf("headul cozii este %s\n", q->head->value);
+    delete_queue(q);
+    delete_stack(st);
+    fclose(in);
+    fclose(out);
     return 0;
 }
-
-// VALGRIND 1 eroare
-// MAKEFILE de modificat pt teste
-// UNDO, REDO se fac usor doar adaugi in stiva dupa fiecare move si golesti daca dai de write
-// INSERT, ALEA CU MOVE_CHAR de testat
-
-// la asta ai 1 memory leak pt exemplu
