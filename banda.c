@@ -33,7 +33,9 @@ typedef struct Stack {
 cell *initCell(char *value) {
     cell *p = (cell *)malloc(sizeof(cell));
     // alocam memorie pentru sirul de caractere reprezentat de comanda
-    p->value = (char *)malloc(sizeof(char) *(strlen(value) + 1));  // a doua alocare e pentru char *value
+    p->value = (char *)malloc(
+        sizeof(char) *
+        (strlen(value) + 1));  // a doua alocare e pentru char *value
 
     // copiem sirul in celula
     strcpy(p->value, value);
@@ -69,7 +71,7 @@ void popQ(queue *q) {
 
 // adaugam in coada(head, element, element, element, tail)
 void addQ(queue *q, char *value) {
-    //printf("in coada ");
+    // printf("in coada ");
     cell *nou = initCell(value);
 
     if (!q->length) {
@@ -101,7 +103,7 @@ stack *initStack() {
 
 // adaugam in stiva
 void pushS(stack *st, char *value) {
-    //printf("in stiva ");
+    // printf("in stiva ");
     cell *p = initCell(value);
     if (st->head == NULL) {
         st->head = p;
@@ -141,11 +143,11 @@ void delete_stack(stack *st) {
     free(st);
 }
 
-// alocam memorie pentru nod(element al benzii) 
+// alocam memorie pentru nod(element al benzii)
 nod *initNod(char value) {
     nod *p = (nod *)malloc(sizeof(nod));  // prima alocare e pentru cells
     p->value = value;
-    //printf("s-a adaugat operatia %c\n", p->value);
+    // printf("s-a adaugat operatia %c\n", p->value);
     p->left = p->right = NULL;
     return p;
 }
@@ -172,8 +174,7 @@ banda *initBanda() {
 // cu tot cu santinela?????????????????????????
 void afisam_banda(banda *b) {
     nod *aux = b->head;
-    while(aux != NULL)
-    {
+    while (aux != NULL) {
         printf("%c ", aux->value);
         aux = aux->right;
     }
@@ -189,18 +190,18 @@ int empty_banda(banda *b) {
 
 // stergem din banda
 void pop_banda(banda *b) {
-    nod *u = b->head; // santinela
+    nod *u = b->head;         // santinela
     nod *v = b->head->right;  // primul element al benzii
-    //printf("primul element al benzii:%c\n", v->value);
-    
+    // printf("primul element al benzii:%c\n", v->value);
+
     // daca e un sg element in banda
-    if(v->right == NULL) {
-        u->right = NULL; // dupa stergere avem dupa santinela NULL
+    if (v->right == NULL) {
+        u->right = NULL;  // dupa stergere avem dupa santinela NULL
     } else {
-        u->right = v->right; // de la stanga spre dreapta
-        v->right->left = u; // de la dreapta spre stanga
+        u->right = v->right;  // de la stanga spre dreapta
+        v->right->left = u;   // de la dreapta spre stanga
     }
-    free(v); // eliberam memoria
+    free(v);  // eliberam memoria
 }
 
 // eliberam memoria ocupata de banda
@@ -216,14 +217,14 @@ void delete_banda(banda *b) {
 void move(banda *b, char direction) {
     if (direction == 'l') {
         if (b->finger != b->head->right)  // daca nu suntem pe prima pozitie
-            b->finger = b->finger->left; // putem trece o pozitie la stanga
+            b->finger = b->finger->left;  // putem trece o pozitie la stanga
         // altfel fingerul ramane pe aceeasi pozitie
     }
 
     if (direction == 'r') {
-        if (b->finger->right == NULL) { // daca suntem pe ultima pozitie
-            nod *aux = initNod('#'); // cream inca un nod
-            b->finger->right = aux;  //<=>a->head->right->right = aux;
+        if (b->finger->right == NULL) {  // daca suntem pe ultima pozitie
+            nod *aux = initNod('#');     // cream inca un nod
+            b->finger->right = aux;      //<=>a->head->right->right = aux;
             aux->left = b->finger;
             b->finger = b->finger->right;  // mutam degetu pe pozitia aia
         }
@@ -234,24 +235,48 @@ void move(banda *b, char direction) {
 void show(banda *b, FILE *out) {
     // luam un nod auxiliar care sa primeasca primul element al listei
     nod *aux = b->head->right;
-    printf("banda: ");
+    // printf("banda: ");
     while (aux != NULL) {
         if (aux == b->finger) {
-            // fprintf(out, "|%c|", aux->value);
-            printf("|%c|", aux->value);
+            fprintf(out, "|%c|", aux->value);
+            // printf("|%c|", aux->value);
         } else {
-            // fprintf(out, "%c", aux->value);
+            fprintf(out, "%c", aux->value);
+            // printf("%c", aux->value);
+        }
+        aux = aux->right;
+    }
+    fprintf(out, "\n");
+    // printf("\n");
+}
+
+// o sa o stergi
+void show_consola(banda *b) {
+    // luam un nod auxiliar care sa primeasca primul element al listei
+    nod *aux = b->head->right;
+    // printf("banda: ");
+    while (aux != NULL) {
+        if (aux == b->finger) {
+             printf("|%c|", aux->value);
+        } else {
             printf("%c", aux->value);
         }
         aux = aux->right;
     }
-    // fprintf(out, "\n");
     printf("\n");
 }
 
+// write <c> merge in consola
+void write(banda *b, char c) { b->finger->value = c; }
+
+void show_current(banda *b, FILE *out) {
+    fprintf(out, "%c", b->finger->value);
+    // printf("%c\n", b->finger->value);
+}
+
 int main() {
-    FILE *in = fopen("t1.in", "r");
-    FILE *out = fopen("t1.out", "w");
+    FILE *in = fopen("tema1.in", "r");
+    FILE *out = fopen("tema1.out", "w");
 
     banda *b;
     stack *st;
@@ -261,9 +286,30 @@ int main() {
     st = initStack();
     q = initQ();
 
+    // move(b, 'r');
+    // show(b, out);
+    // move(b, 'r');
+    // show(b, out);
+    // move(b, 'r');
+    // show(b, out);
+    // move(b, 'r');
+    // show(b, out);
+    // move(b, 'l');
+    // show(b, out);
+    // move(b, 'l');
+    // show(b, out);
+    // move(b, 'l');
+    // show(b, out);
+    // move(b, 'l');
+    // show(b, out);
+    // move(b, 'l');
+    // show(b, out);
+    // write(b, 'A');
+    // show(b, out);
+
     int t;
     char operation[100];
-    // char *o;
+    char *o;
 
     fscanf(in, "%d", &t);
     fgets(operation, 100, in);  // sa scapam de enterul de dupa t
@@ -272,28 +318,74 @@ int main() {
         fgets(operation, 100, in);
         // stergem enterul retinut de fgets
         operation[strlen(operation) - 1] = '\0';
-        addQ(q, operation);
-        pushS(st, operation);
-    }
 
-    move(b, 'r');
-    show(b, out);
-    move(b, 'r');
-    show(b, out);
-    move(b, 'r');
-    show(b, out);
-    move(b, 'r');
-    show(b, out);
-    move(b, 'l');
-    show(b, out);
-    move(b, 'l');
-    show(b, out);
-    move(b, 'l');
-    show(b, out);
-    move(b, 'l');
-    show(b, out);
-    move(b, 'l');
-    show(b, out);
+        if (strcmp(operation, "EXECUTE") == 0) {
+            o = q->front->value;  // FII ATENT CA TU PASTREZI ADRESA AICI, NU
+                                  // VALOAREA ASA CA POPUL TREBUIE FACUT in toate ifurile
+            if (strstr(o, "WRITE")) {
+                write(b, o[strlen(o) - 1]);
+                popQ(q);
+                continue;
+            }
+
+            if (strstr(o, "MOVE_RIGHT") && !strstr(o, "char")) {
+                move(b, 'r');
+                popQ(q);
+                continue;
+            }
+
+            if (strstr(o, "MOVE_LEFT") && !strstr(o, "char")) {
+                move(b, 'l');
+                popQ(q);
+                continue;
+            }
+
+            // if (strstr(o, "MOVE_LEFT_CHAR"))
+            //  move_char(&a, 'l', o[15], out);
+            //  if (strstr(o, "MOVE_RIGHT_CHAR"))
+            //  move_char(&a, 'r', o[16], out);
+            //  if (strstr(o, "INSERT_RIGHT"))
+            //              insert_char(&a, 'r', o[14], out);
+            //      if (strstr(o, "INSERT_LEFT"))
+            //          insert_char(&a, 'l', o[13], out);
+            continue;
+        }
+
+        if (strcmp(operation, "UNDO") == 0) {
+            // printf("face undo\n");
+            //printf("banda dupa:");
+                //show_consola(b);
+            continue;
+        }
+
+        if (strcmp(operation, "REDO") == 0) {
+            // printf("face redo\n");
+            //printf("banda dupa:");
+                //show_consola(b);
+            continue;
+        }
+
+        if (strcmp(operation, "SHOW") == 0) {
+            // printf("face show:");
+            //printf("banda dupa:");
+                //show_consola(b);
+            show(b, out);
+            continue;
+        }
+
+        if (strcmp(operation, "SHOW_CURRENT") == 0) {
+            // printf("face show_curent:");
+            //printf("banda dupa:");
+                //show_consola(b);
+            show_current(b, out);
+            // printf("\n");
+            continue;
+        }
+        addQ(q, operation);
+        //printf("banda dupa:");
+                //show_consola(b);
+        // printf("COADA MATIIII\n");
+    }
 
     delete_queue(q);
     delete_stack(st);
@@ -353,9 +445,6 @@ int main() {
 //     }
 // }
 
-// // write <c>
-// void write(banda *a, char c) { a->finger->value = c; }
-
 // // NETESTATA
 // void insert_char(banda *a, char direction, char c, FILE *out) {
 //     nod *p = a->finger;
@@ -407,54 +496,9 @@ int main() {
 // //         a->finger
 // // }
 
-// // eliberam memoria structurilor
-// void delete_struct(queue *q, banda *a) {
-//     while (!emptyQ(q))
-//         popQ(q);  // in caz ca nu vi fi goala desi cred ca va fi mereu
-//     // sa scap de coada
-//     // printf("coada e coada?:%d\n", emptyQ(q));
-//     free(q);
-//     // dupa scapi de banda
-//     while (a->head != NULL) {
-//         pop_banda(a);  // eliberam simultan memoria pentru banda
-//         // show(a);
-//     }
-// }
-
 // for (int i = 1; i <= t; ++i) {
-//          fgets(operation, 20, in);
-//          printf("operatia este:%s\n", operation);
-//          //printf("Lungimea lui operation eeste %ld", strlen(operation));
-//          for(int k = 0; k < strlen(operation); ++k)
-//              printf("%c", operation[k]);
-//          if (strstr(operation, "EXECUTE")) {
-//              // scoatem din coada si facem operatia
-//              if (!emptyQ(op)) {
-//                  o = op->head->value;
-//                  popQ(op);
-//                  if (strstr(o, "WRITE")) write(&a, o[6]);
-
-//                 if (strstr(o, "MOVE_RIGHT") && !strstr(o, "char")) move(&a,
-//                 'r'); if (strstr(o, "MOVE_LEFT") && !strstr(o, "char"))
-//                 move(&a, 'l'); if (strstr(o, "MOVE_LEFT_CHAR"))
-//                     move_char(&a, 'l', o[15], out);
-//                 if (strstr(o, "MOVE_RIGHT_CHAR"))
-//                     move_char(&a, 'r', o[16], out);
-//                 if (strstr(o, "INSERT_RIGHT"))
-//                     insert_char(&a, 'r', o[14], out);
-//                 if (strstr(o, "INSERT_LEFT"))
-//                     insert_char(&a, 'l', o[13], out);
-//             }
-//         } else {
-//             if (strstr(operation, "UNDO")) {
-//                 // printf("face undo\n");
-//             } else {
-//                 if (strstr(operation, "REDO")) {
-//                     // printf("face redo\n");
-//                 } else {
-//                     if (strstr(operation, "SHOW")) {
-//                         show(&a, out);
-//                     } else {
+//
+//
 //                         if (strstr(operation, "SHOW_CURRENT")) {
 //                             show_current(&a, out);
 //                         }
