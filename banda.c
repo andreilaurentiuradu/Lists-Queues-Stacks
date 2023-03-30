@@ -1,3 +1,4 @@
+/* RADU Andrei-Laurentiu - 312CC */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,12 +25,17 @@ typedef struct Queue {
     int length;
 } queue;
 
+typedef struct ElemS{
+    nod *value;
+    struct ElemS *next;
+} elemS;
+
 typedef struct Stack {
-    cell *head;
+    elemS *head;
     int length;
 } stack;
 
-// alocam memorie pentru cell(element al cozii/stivei)
+// alocam memorie pentru cell(element al cozii)
 cell *initCell(char *value) {
     cell *p = (cell *)malloc(sizeof(cell));
     // alocam memorie pentru sirul de caractere reprezentat de comanda
@@ -93,6 +99,14 @@ void delete_queue(queue *q) {
     free(q);
 }
 
+// alocam memorie pentru elemS
+elemS *init_elemS(nod *p) {
+    elemS *aux = (elemS *)malloc(sizeof(elemS));
+    aux->value = p;
+    aux->next = NULL;
+    return aux;
+}
+
 // initializam stiva
 stack *initStack() {
     stack *st = (stack *)malloc(sizeof(stack));
@@ -102,31 +116,31 @@ stack *initStack() {
 }
 
 // adaugam in stiva
-void pushS(stack *st, char *value) {
+void pushS(stack *st, nod *p) {
     // printf("in stiva ");
-    cell *p = initCell(value);
+    elemS * nou = init_elemS(p);
     if (st->head == NULL) {
-        st->head = p;
+        st->head = nou;
         st->length = 1;
         return;
     }
-    p->next = st->head;
-    st->head = p;
+    nou->next = st->head;
+    st->head = nou;
     st->length++;
     return;
 }
 
 // stergem din stiva
 void popS(stack *st) {
-    cell *aux = st->head;
+    elemS *aux = st->head;
     st->head = st->head->next;
-    free(aux->value);
+    //free(aux->value);
     free(aux);
     st->length--;
 }
 
 // extragem varful stivei
-char *topS(stack *st) { return st->head->value; }
+nod* topS(stack *st) { return st->head->value; }
 
 // verificam daca stiva e goala
 int emptyS(stack *st) {
@@ -214,10 +228,13 @@ void delete_banda(banda *b) {
 }
 
 // move_left move_right
-void move(banda *b, char direction) {
+void move(banda *b, char direction, stack *undo) {
     if (direction == 'l') {
         if (b->finger != b->head->right)  // daca nu suntem pe prima pozitie
+        {
+            pushS(undo, b->finger); 
             b->finger = b->finger->left;  // putem trece o pozitie la stanga
+        }
         // altfel fingerul ramane pe aceeasi pozitie
     }
 
@@ -227,6 +244,7 @@ void move(banda *b, char direction) {
             b->finger->right = aux;      //<=>a->head->right->right = aux;
             aux->left = b->finger;
         }
+        pushS(undo, b->finger); 
         b->finger = b->finger->right;  // mutam degetu pe pozitia aia
     }
 }
@@ -353,42 +371,22 @@ int main() {
     FILE *out = fopen("tema1.out", "w");
 
     banda *b;
-    stack *st;
+    stack *undo, *redo;
     queue *q;
 
     b = initBanda();
-    st = initStack();
+    undo = initStack();
+    redo = initStack();
     q = initQ();
 
-    // move(b, 'r');
-    // show(b, out);
-    // move(b, 'r');
-    // show(b, out);
-    // move(b, 'r');
-    // show(b, out);
-    // move(b, 'r');
-    // show(b, out);
-    // move(b, 'l');
-    // show(b, out);
-    // move(b, 'l');
-    // show(b, out);
-    // move(b, 'l');
-    // show(b, out);
-    // move(b, 'l');
-    // show(b, out);
-    // move(b, 'l');
-    // show(b, out);
-    // write(b, 'A');
-    // show(b, out);
-
-    int t;
+    int t, i;
     char operation[100];
     char *o;
 
     fscanf(in, "%d", &t);
     fgets(operation, 100, in);  // sa scapam de enterul de dupa t
 
-    for (int i = 1; i <= t; ++i) {
+    for (i = 1; i <= t; ++i) {
         fgets(operation, 100, in);
         // stergem enterul retinut de fgets
         operation[strlen(operation) - 1] = '\0';
@@ -409,7 +407,7 @@ int main() {
 
             if (strstr(o, "MOVE_RIGHT") && !strstr(o, "CHAR")) {
                 //printf("operation:%s\n", o);
-                move(b, 'r');
+                move(b, 'r', undo);
                 //printf("banda dupa:");
                 //show_consola(b);
                 popQ(q);
@@ -418,7 +416,7 @@ int main() {
 
             if (strstr(o, "MOVE_LEFT") && !strstr(o, "CHAR")) {
                 //printf("operation:%s?\n", o);
-                move(b, 'l');
+                move(b, 'l', undo);
                 //printf("banda dupa:");
                 //show_consola(b);
                 popQ(q);
@@ -469,12 +467,18 @@ int main() {
             // printf("face undo\n");
             // printf("banda dupa:");
             //     show_consola(b);
+            pushS(redo, b->finger);
+            b->finger = topS(undo);
+            popS(undo);
             continue;
         }
 
         if (strcmp(operation, "REDO") == 0) {
             // printf("face redo\n");
             // printf("banda dupa:");
+            pushS(undo, b->finger);
+            b->finger = topS(redo);
+            popS(redo);
             // show_consola(b);
             continue;
         }
@@ -502,18 +506,12 @@ int main() {
     }
 
     delete_queue(q);
-    delete_stack(st);
+    delete_stack(undo);
+    delete_stack(redo);
     delete_banda(b);
 
     fclose(in);
     fclose(out);
     return 0;
 }
-// // UNDO, REDO se fac usor doar adaugi in stiva dupa fiecare move si golesti
 
-// // OPERATII DE TIP UNDO/REDO
-// // void undo(banda *a, stack *undo_st, stack *redo_st) {
-// //     push(redo_st, top(undo_st));
-// //     if(strstr(top(undo_st), "RIGHT"))
-// //         a->finger
-// // }
