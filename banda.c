@@ -213,7 +213,7 @@ void delete_banda(banda *b) {
     free(b);        // structura in sine
 }
 
-// move_left move_right merge in consola
+// move_left move_right
 void move(banda *b, char direction) {
     if (direction == 'l') {
         if (b->finger != b->head->right)  // daca nu suntem pe prima pozitie
@@ -226,12 +226,12 @@ void move(banda *b, char direction) {
             nod *aux = initNod('#');     // cream inca un nod
             b->finger->right = aux;      //<=>a->head->right->right = aux;
             aux->left = b->finger;
-            b->finger = b->finger->right;  // mutam degetu pe pozitia aia
         }
+        b->finger = b->finger->right;  // mutam degetu pe pozitia aia
     }
 }
 
-// show merge in consola
+// show
 void show(banda *b, FILE *out) {
     // luam un nod auxiliar care sa primeasca primul element al listei
     nod *aux = b->head->right;
@@ -266,12 +266,54 @@ void show_consola(banda *b) {
     printf("\n");
 }
 
-// write <c> merge in consola
+// write <c> 
 void write(banda *b, char c) { b->finger->value = c; }
 
+// show_current
 void show_current(banda *b, FILE *out) {
-    fprintf(out, "%c", b->finger->value);
+    fprintf(out, "%c\n", b->finger->value);
     // printf("%c\n", b->finger->value);
+}
+
+// insert_char
+void insert_char(banda *b, char direction, char c, FILE *out) {
+    nod *v = b->finger;
+    // printf("caracterul de bagat este %c\n", c);
+    if (direction == 'l') {
+        // nu uita ca head e santinela
+        if (v == b->head->right) {
+            // daca e fix pe prima pozitie
+            //printf("ERROR\n");
+            fprintf(out, "ERROR\n");
+        } else {
+            nod *u = b->finger->left;
+            // alocam memorie pentru nodul nou
+            nod *nou = initNod(c);
+            // facem legaturile cu u si v astfel incat sa avem u nou v 
+            u->right = nou;
+            nou->left = u;
+            v->left = nou;
+            nou->right = v;
+            // actualizam fingerul
+            b->finger = nou;
+        }
+    }
+
+    if (direction == 'r') {
+        nod *nou = initNod(c);
+        if (b->finger->right) { // v nou w
+            nod *w = b->finger->right;
+            v->right = nou;
+            nou->left = v;
+            w->left = nou;
+            nou->right = w;            
+        } else {
+            v->right = nou;
+            nou->left = v;
+        }
+
+        b->finger = nou;
+    }
 }
 
 int main() {
@@ -318,24 +360,52 @@ int main() {
         fgets(operation, 100, in);
         // stergem enterul retinut de fgets
         operation[strlen(operation) - 1] = '\0';
-
         if (strcmp(operation, "EXECUTE") == 0) {
             o = q->front->value;  // FII ATENT CA TU PASTREZI ADRESA AICI, NU
                                   // VALOAREA ASA CA POPUL TREBUIE FACUT in toate ifurile
             if (strstr(o, "WRITE")) {
+                // printf("operation:%s\n", o);
+                // printf("strlen:%ld\n", strlen(o));
+                // printf("trebuie adaugat caracterul:%c\n", o[strlen(o)-1]);
                 write(b, o[strlen(o) - 1]);
+                // printf("banda dupa:");
+                // show_consola(b);
                 popQ(q);
                 continue;
             }
 
             if (strstr(o, "MOVE_RIGHT") && !strstr(o, "char")) {
                 move(b, 'r');
+                // printf("banda dupa:");
+                // show_consola(b);
                 popQ(q);
                 continue;
             }
 
             if (strstr(o, "MOVE_LEFT") && !strstr(o, "char")) {
                 move(b, 'l');
+                // printf("banda dupa:");
+                // show_consola(b);
+                popQ(q);
+                continue;
+            }
+
+            if (strstr(o, "INSERT_RIGHT")) {
+                // printf("operation:%s\n", o);
+                // printf("trebuie adaugat caracterul:%c\n", o[strlen(o)-1]);
+                insert_char(b, 'r', o[strlen(o) - 1], out);
+                // printf("banda dupa:");
+                // show_consola(b);
+                popQ(q);
+                continue;
+            }
+
+            if (strstr(o, "INSERT_LEFT")){
+                // printf("operation:%s\n", o);
+                // printf("trebuie adaugat caracterul:%c\n", o[strlen(o)-1]);
+                insert_char(b, 'l', o[strlen(o) - 1], out);
+                // printf("banda dupa:");
+                // show_consola(b);
                 popQ(q);
                 continue;
             }
@@ -344,17 +414,14 @@ int main() {
             //  move_char(&a, 'l', o[15], out);
             //  if (strstr(o, "MOVE_RIGHT_CHAR"))
             //  move_char(&a, 'r', o[16], out);
-            //  if (strstr(o, "INSERT_RIGHT"))
-            //              insert_char(&a, 'r', o[14], out);
-            //      if (strstr(o, "INSERT_LEFT"))
-            //          insert_char(&a, 'l', o[13], out);
+            
             continue;
         }
 
         if (strcmp(operation, "UNDO") == 0) {
             // printf("face undo\n");
-            //printf("banda dupa:");
-                //show_consola(b);
+            // printf("banda dupa:");
+            //     show_consola(b);
             continue;
         }
 
@@ -367,16 +434,16 @@ int main() {
 
         if (strcmp(operation, "SHOW") == 0) {
             // printf("face show:");
-            //printf("banda dupa:");
-                //show_consola(b);
+            // printf("banda dupa:");
+            //     show_consola(b);
             show(b, out);
             continue;
         }
 
         if (strcmp(operation, "SHOW_CURRENT") == 0) {
             // printf("face show_curent:");
-            //printf("banda dupa:");
-                //show_consola(b);
+            // printf("banda dupa:");
+            // show_consola(b);
             show_current(b, out);
             // printf("\n");
             continue;
@@ -395,20 +462,12 @@ int main() {
     fclose(out);
     return 0;
 }
-// // verifici inserturile si vezi ca s-ar putea sa ai un caracter in plus la
-// afisare in fisier si vezi cu \n cum faci la final de fisier
 // // UNDO, REDO se fac usor doar adaugi in stiva dupa fiecare move si golesti
 // daca
 // // dai de write INSERT, ALEA CU MOVE_CHAR de testat
 
 // // OPERATII DE TIP QUERY
 // // afisam banda cu tot cu deget
-
-// void show_current(banda *p, FILE *out)
-// {
-//     //fprintf(out, "%c", p->finger->value);
-//     printf("%c", p->finger->value);
-// }
 
 // // OPERATII DE TIP UPDATE
 
@@ -445,49 +504,6 @@ int main() {
 //     }
 // }
 
-// // NETESTATA
-// void insert_char(banda *a, char direction, char c, FILE *out) {
-//     nod *p = a->finger;
-//     printf("caracterul de bagat este %c\n", c);
-//     if (direction == 'l') {
-//         // nu uita ca head e santinela
-//         if (p == a->head->right) {
-//             printf("ERROR\n");
-//             //fprintf(out, "ERROR\n");
-//         } else {
-//             nod *u = a->finger->left;
-//             nod *nou = (nod *)malloc(sizeof(nod));
-//             nou->left = u;
-//             nou->right = p;
-//             nou->value = c;
-
-//             u->right = nou;
-//             p->left = nou;
-
-//             a->finger = nou;
-//         }
-//     }
-
-//     if (direction == 'r') {
-//         if (a->finger->right) {
-//             nod *u = a->finger->right;
-//             nod *nou = (nod *)malloc(sizeof(nod));
-//             p->right = nou;
-//             u->left = nou;
-//             nou->value = c;
-//             nou->left = p;
-//             nou->right = u;
-//             a->finger = nou;
-//         } else {
-//             printf("prima greseala\n");
-//             nod *nou = (nod *)malloc(sizeof(nod));
-//             p->right = nou;
-//             nou->value = c;
-//             nou->left = p;
-//             a->finger = nou;
-//         }
-//     }
-// }
 
 // // OPERATII DE TIP UNDO/REDO
 // // void undo(banda *a, stack *undo_st, stack *redo_st) {
@@ -495,40 +511,3 @@ int main() {
 // //     if(strstr(top(undo_st), "RIGHT"))
 // //         a->finger
 // // }
-
-// for (int i = 1; i <= t; ++i) {
-//
-//
-//                         if (strstr(operation, "SHOW_CURRENT")) {
-//                             show_current(&a, out);
-//                         }
-//                         // daca nu e execute sau undo/redo sau query
-//                         // atunci e
-//                         // bagat in coada
-//                         else {
-//                             addQ(op, operation);  // adaugat   in coada
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//         show(&a, out);
-//         printf("\n");
-//     }
-//     //stack *st_undo, st_redo;
-
-//     // initializam coada de operatii, banda si stivele
-//     op = initQ();
-//     init(&a);
-//     show(&a, out);
-//     //st_undo = initStack();
-//     //st_redo = initStack();
-//     //  citim numarul de operatii
-//     fscanf(in, "%d", &t);
-//     printf("ti-a citit t-ul;%d\n", t);
-//     // scapi de enter
-//     fgets(operation, 20, in);
-//
-
-//     delete_struct(op, &a);
-//     //fprintf(out, "\n");
