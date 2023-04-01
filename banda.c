@@ -145,13 +145,12 @@ int emptyS(stack *st) {
     // 1 = empty
 }
 
-// eliberam memoria ocupata de stiva
+// eliberam memoria ocupata de stiva in afara de structura in sine
 void delete_stack(stack *st) {
     // cat timp stiva nu e goala stergem cate un element din ea
     while (!emptyS(st)) {
         popS(st);
     }
-    free(st);
 }
 
 // alocam memorie pentru nod(element al benzii)
@@ -395,6 +394,10 @@ int main() {
             if (strstr(o, "WRITE")) {
                 write(b, o[strlen(o) - 1]);
                 popQ(q);
+                //stergem elementele din cele doua stive
+                // se garanteaza ca nu se dor da undo/redo peste write
+                delete_stack(undo);
+                delete_stack(redo);
                 continue;
             }
 
@@ -484,7 +487,9 @@ int main() {
     // stergem structurile eliberand memoria ocupata
     delete_queue(q);
     delete_stack(undo);
+    free(undo);
     delete_stack(redo);
+    free(redo);
     delete_banda(b);
 
     // inchidem fisierele
