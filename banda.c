@@ -366,6 +366,7 @@ int main() {
 
     // nr = numarul de operatii
     // o = operatia extrasa din coada
+    // operation = operatia citita
     int nr, i;
     char operation[20];
     char *o;
